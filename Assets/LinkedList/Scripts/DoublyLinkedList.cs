@@ -6,8 +6,8 @@ public class DoublyLinkedListNode<T>
 {
     public T Value {get; set;}
     public DoublyLinkedListNode<T> Next {get; set;}
+    public DoublyLinkedListNode<T> previous {get; set;}
     public DoublyLinkedList<T> List {get; set;}
-
     public DoublyLinkedListNode(T value)
     {
         Value = value;
@@ -19,7 +19,6 @@ public class DoublyLinkedList<T> : IEnumerable<T>
     private DoublyLinkedListNode<T> tail;
     public int Count { get; private set;}
     public DoublyLinkedListNode<T> First => head;
-    
     public DoublyLinkedListNode<T> Last => tail;
 
     public IEnumerator<T> GetEnumerator()
@@ -35,6 +34,15 @@ public class DoublyLinkedList<T> : IEnumerable<T>
     IEnumerator IEnumerable.GetEnumerator()
     {
         return GetEnumerator();
+    }
+    public IEnumerable<T> Backward()
+    {
+        DoublyLinkedListNode<T> current = tail;
+        while(current != null)
+        {
+            yield return current.Value;
+            current = current.previous;
+        }
     }
 
     public DoublyLinkedListNode<T> AddFirst(T value)
@@ -94,12 +102,16 @@ public class DoublyLinkedList<T> : IEnumerable<T>
     {
         ValidataNode(node);
 
-        DoublyLinkedListNode<T> previous = null;
-
         if(node == head)
         {
             return AddFirst(value);
-        }       
+        }
+
+        var previous = head;
+        while (previous.Next != node)
+        {
+            previous = previous.Next;
+        }
 
         var newNode = new DoublyLinkedListNode<T>(value);
         newNode.List = this;
@@ -165,14 +177,10 @@ public class DoublyLinkedList<T> : IEnumerable<T>
         }
 
         node.Next = null;
+        node.previous = null;
         node.List = null;
 
         Count--;
-    }
-
-    public void BackWard()
-    {
-        
     }
 
     public DoublyLinkedListNode<T> Find(T value)
@@ -197,11 +205,13 @@ public class DoublyLinkedList<T> : IEnumerable<T>
     }
     public void Clear()
     {
+
         var current = head;
         while (current != null)
         {
             var next = current.Next;
             current.Next = null;
+            current.previous = null;
             current.List = null;
             current = current.Next;
         }
