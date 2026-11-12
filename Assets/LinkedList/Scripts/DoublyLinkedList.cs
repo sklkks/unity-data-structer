@@ -1,4 +1,4 @@
-using System;
+ using System;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -50,13 +50,18 @@ public class DoublyLinkedList<T> : IEnumerable<T>
         var node = new DoublyLinkedListNode<T>(value);
         node.List = this;
 
-        node.Next = head;
-        head = node;
-
-        if(tail == null)
+        if(head == null)
         {
+            head = node;
             tail = node;
         }
+        else
+        {
+            node.Next = head;
+            head.previous = node;
+            head = node;
+        }
+
         Count++;
         return node;
     }
@@ -73,6 +78,7 @@ public class DoublyLinkedList<T> : IEnumerable<T>
         else
         {
             tail.Next = node;
+            node.previous = tail;
             tail = node;
         }
 
@@ -92,6 +98,8 @@ public class DoublyLinkedList<T> : IEnumerable<T>
         newNode.List = this;
 
         newNode.Next = node.Next;
+        newNode.previous = node;
+        node.Next.previous = newNode;
         node.Next = newNode;
 
         Count++;
@@ -117,7 +125,9 @@ public class DoublyLinkedList<T> : IEnumerable<T>
         newNode.List = this;
 
         newNode.Next = node;
-        previous.Next = newNode;
+        newNode.previous = node.previous;        
+        node.previous.Next = newNode;
+        node.previous = newNode;
 
         Count++;
         return newNode;
@@ -156,24 +166,23 @@ public class DoublyLinkedList<T> : IEnumerable<T>
         DoublyLinkedListNode<T> previous = null;
         DoublyLinkedListNode<T> current = head;
 
-        while (current != node)
-        {
-            previous = current;
-            current = current.Next;
-        }
-
-        if(previous == null)
+        if(node == head)
         {
             head = node.Next;
+
         }
         else
         {
-            previous.Next = node.Next;
+            node.previous.Next = node.Next;
         }
 
         if(node == tail)
         {
-            tail = previous;            
+            tail = node.previous;
+        }
+        else
+        {
+            node.Next.previous = node.previous;
         }
 
         node.Next = null;
