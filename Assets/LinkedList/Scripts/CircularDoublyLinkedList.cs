@@ -5,36 +5,48 @@ using System.Collections.Generic;
 public class CircularDoublyLinkedListNode<T>
 {
     public T Value { get; set; }
-    public CircularDoublyLinkedList<T> List { get; set; }
 
-    // 리스트 내부 전용 링크 = 마지막 노드의 next가 처음 노드인 원형 연결
     public CircularDoublyLinkedListNode<T> next;
     public CircularDoublyLinkedListNode<T> prev;
 
-    // 사용자가 보는 링크 = 이음새(마지막 → 처음)에서 null을 돌려줘 원형을 숨긴다
     public CircularDoublyLinkedListNode<T> Next => next == null || next == List.First ? null : next;
-    public CircularDoublyLinkedListNode<T> Previous => prev == null || this == List.First ? null : prev;
+
+    public CircularDoublyLinkedListNode<T> Previous =>
+        prev == null || prev == List.Last ? null : prev;
+    public CircularDoublyLinkedList<T> List { get; set; }
 
     public CircularDoublyLinkedListNode(T value)
     {
         Value = value;
     }
 }
+
 public class CircularDoublyLinkedList<T> : IEnumerable<T>
 {
     private CircularDoublyLinkedListNode<T> head;
-    private CircularDoublyLinkedListNode<T> tail;
-    public int Count { get; private set;}
+
+    public int Count { get; private set; }
+
     public CircularDoublyLinkedListNode<T> First => head;
-    public CircularDoublyLinkedListNode<T> Last => tail;
+    public CircularDoublyLinkedListNode<T> Last => head?.prev;
 
     public IEnumerator<T> GetEnumerator()
     {
-        CircularDoublyLinkedListNode<T> current = head;
-        while(current != null)
+        CircularDoublyLinkedListNode<T> current = First;
+        while (current != null)
         {
             yield return current.Value;
             current = current.Next;
+        }
+    }
+
+    public IEnumerable<T> Backward()
+    {
+        CircularDoublyLinkedListNode<T> current = Last;
+        while (current != null)
+        {
+            yield return current.Value;
+            current = current.Previous;
         }
     }
 
@@ -42,106 +54,75 @@ public class CircularDoublyLinkedList<T> : IEnumerable<T>
     {
         return GetEnumerator();
     }
-    public IEnumerable<T> Backward()
-    {
-        CircularDoublyLinkedListNode<T> current = tail;
-        while(current != null)
-        {
-            yield return current.Value;
-            current = current.previous;
-        }
-    }
 
     public CircularDoublyLinkedListNode<T> AddFirst(T value)
     {
-        var node = new CircularDoublyLinkedListNode<T>(value);
-        node.List = this;
-
-        if(head == null)
-        {
-            head = node;
-            tail = node;
-        }
-        else
-        {
-            node.Next = head;
-            head.previous = node;
-            head = node;
-        }
-
-        Count++;
+        var node = AddLast(value);
+        head = node;
         return node;
     }
+
     public CircularDoublyLinkedListNode<T> AddLast(T value)
     {
         var node = new CircularDoublyLinkedListNode<T>(value);
         node.List = this;
-
-        if(tail == null)
+        if (head == null)
         {
+            node.next = node;
+            node.prev = node;
             head = node;
-            tail = node;
         }
         else
         {
-            tail.Next = node;
-            node.previous = tail;
-            tail = node;
+            InsertBefore(head, node);
         }
-
         Count++;
         return node;
     }
-    public CircularDoublyLinkedListNode<T> AddAfter(CircularDoublyLinkedListNode<T>node, T value)
+
+    public CircularDoublyLinkedListNode<T> AddAfter(CircularDoublyLinkedListNode<T> node, T value)
     {
         ValidataNode(node);
 
-        if(node == tail)
-        {
-            return AddLast(value);
-        }
-
         var newNode = new CircularDoublyLinkedListNode<T>(value);
         newNode.List = this;
-
-        newNode.Next = node.Next;
-        newNode.previous = node;
-        node.Next.previous = newNode;
-        node.Next = newNode;
+        InsertBefore(node.next, newNode);
 
         Count++;
         return newNode;
     }
 
-       public CircularDoublyLinkedListNode<T> AddBefore(CircularDoublyLinkedListNode<T>node, T value)
+    private void InsertBefore(
+        CircularDoublyLinkedListNode<T> node,
+        CircularDoublyLinkedListNode<T> newNode
+    )
+    {
+        newNode.prev = node.prev;
+        newNode.next = node;
+        node.prev.next = newNode;
+        node.prev = newNode;
+    }
+
+    public CircularDoublyLinkedListNode<T> AddBefore(CircularDoublyLinkedListNode<T> node, T value)
     {
         ValidataNode(node);
 
-        if(node == head)
-        {
-            return AddFirst(value);
-        }
-
-        var previous = head;
-        while (previous.Next != node)
-        {
-            previous = previous.Next;
-        }
-
         var newNode = new CircularDoublyLinkedListNode<T>(value);
         newNode.List = this;
+        InsertBefore(node, newNode);
 
-        newNode.Next = node;
-        newNode.previous = node.previous;        
-        node.previous.Next = newNode;
-        node.previous = newNode;
+        if (node == head)
+        {
+            head = newNode;
+        }
 
         Count++;
         return newNode;
     }
+
     public void RemoveFirst()
     {
-        if(head == null)
+        if (head == null)
         {
             throw new InvalidOperationException("리스트가 비어있습니다.");
         }
@@ -150,12 +131,13 @@ public class CircularDoublyLinkedList<T> : IEnumerable<T>
 
     public void RemoveLast()
     {
-        if(tail == null)
+        if (head == null)
         {
             throw new InvalidOperationException("리스트가 비어있습니다.");
         }
-        Remove(tail);
+        Remove(head.prev);
     }
+
     public bool Remove(T value)
     {
         var node = Find(value);
@@ -166,34 +148,28 @@ public class CircularDoublyLinkedList<T> : IEnumerable<T>
         Remove(node);
         return true;
     }
+
     public void Remove(CircularDoublyLinkedListNode<T> node)
     {
         ValidataNode(node);
-        
-        CircularDoublyLinkedListNode<T> previous = null;
-        CircularDoublyLinkedListNode<T> current = head;
 
-        if(node == head)
+        if (Count == 1)
         {
-            head = node.Next;
-
+            head = null;
         }
         else
         {
-            node.previous.Next = node.Next;
+            node.prev.next = node.next;
+            node.next.prev = node.prev;
+
+            if (node == head)
+            {
+                head = node.next;
+            }
         }
 
-        if(node == tail)
-        {
-            tail = node.previous;
-        }
-        else
-        {
-            node.Next.previous = node.previous;
-        }
-
-        node.Next = null;
-        node.previous = null;
+        node.next = null;
+        node.prev = null;
         node.List = null;
 
         Count--;
@@ -202,47 +178,45 @@ public class CircularDoublyLinkedList<T> : IEnumerable<T>
     public CircularDoublyLinkedListNode<T> Find(T value)
     {
         var comparer = EqualityComparer<T>.Default;
-
         CircularDoublyLinkedListNode<T> current = head;
-        while(current != null)
+        while (current != null)
         {
-            if(comparer.Equals(current.Value, value))
+            if (comparer.Equals(current.Value, value))
             {
                 return current;
             }
-
             current = current.Next;
         }
         return null;
     }
+
     public bool Contains(T value)
     {
         return Find(value) != null;
     }
+
     public void Clear()
     {
-
         var current = head;
-        while (current != null)
+        for (int i = 0; i < Count; ++i)
         {
-            var next = current.Next;
-            current.Next = null;
-            current.previous = null;
+            var next = current.next;
+            current.next = null;
+            current.prev = null;
             current.List = null;
-            current = current.Next;
+            current = next;
         }
-
-        head = tail = null;
+        head = null;
         Count = 0;
     }
 
     private void ValidataNode(CircularDoublyLinkedListNode<T> node)
     {
-        if(node == null)
+        if (node == null)
         {
             throw new ArgumentNullException(nameof(node));
         }
-        if(node.List != this)
+        if (node.List != this)
         {
             throw new InvalidOperationException("이 리스트에 속한 노드가 아닙니다.");
         }

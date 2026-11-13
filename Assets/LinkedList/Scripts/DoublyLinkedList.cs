@@ -114,13 +114,6 @@ public class DoublyLinkedList<T> : IEnumerable<T>
         {
             return AddFirst(value);
         }
-
-        var previous = head;
-        while (previous.Next != node)
-        {
-            previous = previous.Next;
-        }
-
         var newNode = new DoublyLinkedListNode<T>(value);
         newNode.List = this;
 
@@ -162,11 +155,8 @@ public class DoublyLinkedList<T> : IEnumerable<T>
     public void Remove(DoublyLinkedListNode<T> node)
     {
         ValidataNode(node);
-        
-        DoublyLinkedListNode<T> previous = null;
-        DoublyLinkedListNode<T> current = head;
-
-        if(node == head)
+ 
+        if(node.previous == head)
         {
             head = node.Next;
 
@@ -176,7 +166,7 @@ public class DoublyLinkedList<T> : IEnumerable<T>
             node.previous.Next = node.Next;
         }
 
-        if(node == tail)
+        if(node.Next == null)
         {
             tail = node.previous;
         }
