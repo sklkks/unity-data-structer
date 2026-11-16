@@ -2,7 +2,7 @@ using UnityEngine;
 using TMPro;
 
 
-public class NodeVisualLizer : MonoBehaviour
+public class NodeVisualizer : MonoBehaviour
 {
     public SpriteRenderer nodeRenderer;
     public TextMeshPro nodeText;
